@@ -3,7 +3,8 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import { Copy, Download, FileCode } from 'lucide-react';
+import { Copy, Download, FileCode, Terminal } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
 
 interface TerraformOutputProps {
   terraformCode: string;
@@ -11,15 +12,19 @@ interface TerraformOutputProps {
 
 const TerraformOutput: React.FC<TerraformOutputProps> = ({ terraformCode }) => {
   const [copied, setCopied] = useState(false);
+  const [showLogs, setShowLogs] = useState(false);
+  const [logs, setLogs] = useState<string[]>([]);
 
   const copyToClipboard = () => {
     navigator.clipboard.writeText(terraformCode);
     setCopied(true);
+    addLog("Copiado para a área de transferência");
     toast.success('Código copiado para a área de transferência');
     setTimeout(() => setCopied(false), 2000);
   };
 
   const downloadTerraformFile = () => {
+    addLog("Iniciando download do arquivo Terraform");
     const blob = new Blob([terraformCode], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -29,7 +34,19 @@ const TerraformOutput: React.FC<TerraformOutputProps> = ({ terraformCode }) => {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
+    addLog("Arquivo Terraform baixado com sucesso");
     toast.success('Arquivo Terraform baixado');
+  };
+
+  const addLog = (message: string) => {
+    const timestamp = new Date().toISOString();
+    setLogs(prev => [...prev, `[${timestamp}] ${message}`]);
+    console.log(`[TERRAFORM] ${message}`);
+  };
+
+  const toggleLogs = () => {
+    setShowLogs(!showLogs);
+    addLog(showLogs ? "Logs ocultados" : "Logs exibidos");
   };
 
   if (!terraformCode) {
@@ -53,8 +70,19 @@ const TerraformOutput: React.FC<TerraformOutputProps> = ({ terraformCode }) => {
             <code>{terraformCode}</code>
           </pre>
         </div>
+        
+        {showLogs && (
+          <div className="mt-4">
+            <h3 className="text-sm font-medium mb-2">Logs de operação:</h3>
+            <Textarea 
+              readOnly 
+              value={logs.join('\n')} 
+              className="h-40 font-mono text-xs bg-black text-green-400"
+            />
+          </div>
+        )}
       </CardContent>
-      <CardFooter className="flex justify-between gap-4">
+      <CardFooter className="flex flex-wrap gap-2">
         <Button
           variant="outline"
           className="flex-1"
@@ -70,6 +98,14 @@ const TerraformOutput: React.FC<TerraformOutputProps> = ({ terraformCode }) => {
         >
           <Download className="mr-2 h-4 w-4" />
           Baixar arquivo .tf
+        </Button>
+        <Button
+          variant="secondary"
+          className="flex-1"
+          onClick={toggleLogs}
+        >
+          <Terminal className="mr-2 h-4 w-4" />
+          {showLogs ? 'Ocultar logs' : 'Mostrar logs'}
         </Button>
       </CardFooter>
     </Card>
