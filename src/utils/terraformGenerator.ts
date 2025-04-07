@@ -75,7 +75,7 @@ ${terraformRecord.answers_list.map(answer => `      "${answer}"`).join(',\n')}
  * Generate provider configuration
  */
 export function generateProviderConfig(): string {
-  // Usando uma referência à variável de ambiente nas GitHub Actions
+  // Using Terraform variables for API token
   return `terraform {
   required_providers {
     azion = {
@@ -85,9 +85,15 @@ export function generateProviderConfig(): string {
   }
 }
 
+# Define variable for Azion API token
+variable "azion_api_token" {
+  description = "Azion API Token"
+  type        = string
+  sensitive   = true
+}
+
 provider "azion" {
-  # O token da API é obtido da variável de ambiente AZION_API_TOKEN
-  # configurada nas GitHub Actions a partir do segredo do repositório
+  api_token = var.azion_api_token
 }
 
 `;

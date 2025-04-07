@@ -30,7 +30,7 @@ const TerraformOutput: React.FC<TerraformOutputProps> = ({ terraformCode }) => {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'azion_dns.tf';
+    a.download = 'main.tf';
     document.body.appendChild(a);
     addLog("URL do objeto blob criada: " + url.substring(0, 30) + "...");
     addLog("Elemento <a> criado para download");

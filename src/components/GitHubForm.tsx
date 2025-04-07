@@ -70,24 +70,31 @@ const GitHubForm: React.FC<GitHubFormProps> = ({ terraformCode, onSubmit }) => {
     addLog(`Token Azion: ${azionToken.substring(0, 4)}...${azionToken.substring(azionToken.length - 4)}`);
     
     try {
-      // Criando o arquivo principal de Terraform
-      const mainTerraformFilename = 'azion_dns.tf';
+      // Creating Terraform files
+      const mainTerraformFilename = 'main.tf';
       
-      // Criando um workflow do GitHub Actions para automatizar o terraform
+      // Create a terraform.tfvars file for the variable
+      const tfvarsContent = `azion_api_token = "${azionToken}"`;
+      const tfvarsFilename = 'terraform.tfvars';
+      
+      // Creating a GitHub Actions workflow
       const workflowContent = createGitHubWorkflow();
       
-      // Criando o arquivo README.md
+      // Creating the README file
       const readmeContent = createReadmeFile(repository);
       
-      // Enviar para o GitHub
+      // Send to GitHub
       await commitToGitHub({
         token: githubToken,
         repository,
         azionToken,
         files: [
           { path: mainTerraformFilename, content: terraformCode },
+          { path: tfvarsFilename, content: tfvarsContent },
           { path: '.github/workflows/terraform.yml', content: workflowContent },
-          { path: 'README.md', content: readmeContent }
+          { path: 'README.md', content: readmeContent },
+          // Add .gitignore to ignore .tfvars files
+          { path: '.gitignore', content: '# Local .terraform directories\n**/.terraform/*\n\n# .tfstate files\n*.tfstate\n*.tfstate.*\n\n# Crash log files\ncrash.log\ncrash.*.log\n\n# Exclude all .tfvars files, which might contain sensitive data\n*.tfvars\n*.tfvars.json\n\n# Ignore override files\noverride.tf\noverride.tf.json\n*_override.tf\n*_override.tf.json\n\n# Ignore CLI configuration files\n.terraformrc\nterraform.rc' }
         ]
       });
       
@@ -139,30 +146,29 @@ jobs:
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v1
 
+    # Create tfvars file from GitHub secret
+    - name: Create tfvars file
+      run: |
+        echo "azion_api_token = \\"$AZION_API_TOKEN\\"" > terraform.tfvars
+      env:
+        AZION_API_TOKEN: \${{ secrets.AZION_API_TOKEN }}
+
     # Initialize a new or existing Terraform working directory
     - name: Terraform Init
       run: terraform init
-      env:
-        AZION_API_TOKEN: \${{ secrets.AZION_API_TOKEN }}
 
     # Validate the terraform files
     - name: Terraform Validate
       run: terraform validate
-      env:
-        AZION_API_TOKEN: \${{ secrets.AZION_API_TOKEN }}
 
     # Generates an execution plan for Terraform
     - name: Terraform Plan
       run: terraform plan
-      env:
-        AZION_API_TOKEN: \${{ secrets.AZION_API_TOKEN }}
         
     # Apply the terraform plan to create/update infrastructure
     - name: Terraform Apply
       if: github.ref == 'refs/heads/main' && github.event_name == 'push'
       run: terraform apply -auto-approve
-      env:
-        AZION_API_TOKEN: \${{ secrets.AZION_API_TOKEN }}
 `;
   };
   
@@ -187,7 +193,8 @@ Este repositório está configurado com GitHub Actions para automaticamente apli
 
 ## Estrutura de Arquivos
 
-- \`azion_dns.tf\`: Contém a definição dos recursos DNS da Azion
+- \`main.tf\`: Contém a definição dos recursos DNS da Azion e a configuração do provider
+- \`terraform.tfvars\`: Contém o token da API Azion (gerado automaticamente no GitHub Actions)
 - \`.github/workflows/terraform.yml\`: Define o pipeline de CI/CD para aplicar as mudanças
 
 ## Como Contribuir
