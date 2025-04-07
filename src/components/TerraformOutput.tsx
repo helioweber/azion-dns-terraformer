@@ -19,6 +19,7 @@ const TerraformOutput: React.FC<TerraformOutputProps> = ({ terraformCode }) => {
     navigator.clipboard.writeText(terraformCode);
     setCopied(true);
     addLog("Copiado para a área de transferência");
+    addLog(`Total de ${terraformCode.length} caracteres copiados`);
     toast.success('Código copiado para a área de transferência');
     setTimeout(() => setCopied(false), 2000);
   };
@@ -31,9 +32,13 @@ const TerraformOutput: React.FC<TerraformOutputProps> = ({ terraformCode }) => {
     a.href = url;
     a.download = 'azion_dns.tf';
     document.body.appendChild(a);
+    addLog("URL do objeto blob criada: " + url.substring(0, 30) + "...");
+    addLog("Elemento <a> criado para download");
     a.click();
+    addLog("Download iniciado pelo navegador");
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
+    addLog("Elemento <a> removido e URL do objeto blob liberada");
     addLog("Arquivo Terraform baixado com sucesso");
     toast.success('Arquivo Terraform baixado');
   };
@@ -48,6 +53,21 @@ const TerraformOutput: React.FC<TerraformOutputProps> = ({ terraformCode }) => {
     setShowLogs(!showLogs);
     addLog(showLogs ? "Logs ocultados" : "Logs exibidos");
   };
+
+  // Adicionar logs iniciais quando o componente recebe terraform code
+  React.useEffect(() => {
+    if (terraformCode) {
+      addLog("Código Terraform carregado");
+      addLog(`Tamanho do código: ${terraformCode.length} caracteres`);
+      
+      // Contador de recursos
+      const zoneCount = (terraformCode.match(/resource "azion_intelligent_dns_zone"/g) || []).length;
+      const recordCount = (terraformCode.match(/resource "azion_intelligent_dns_record"/g) || []).length;
+      
+      addLog(`Zonas detectadas: ${zoneCount}`);
+      addLog(`Registros detectados: ${recordCount}`);
+    }
+  }, [terraformCode]);
 
   if (!terraformCode) {
     return null;
