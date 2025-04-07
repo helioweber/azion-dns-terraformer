@@ -63,9 +63,18 @@ const TerraformOutput: React.FC<TerraformOutputProps> = ({ terraformCode }) => {
       // Contador de recursos
       const zoneCount = (terraformCode.match(/resource "azion_intelligent_dns_zone"/g) || []).length;
       const recordCount = (terraformCode.match(/resource "azion_intelligent_dns_record"/g) || []).length;
+      const providerCount = (terraformCode.match(/provider "azion"/g) || []).length;
       
       addLog(`Zonas detectadas: ${zoneCount}`);
       addLog(`Registros detectados: ${recordCount}`);
+      addLog(`Configuração do provider: ${providerCount > 0 ? 'Presente' : 'Ausente'}`);
+      
+      // Análise de recursos adicionais
+      const answerCount = terraformCode.match(/answers_list\s*=\s*\[([^\]]*)\]/g)?.reduce((count, match) => {
+        return count + (match.match(/"[^"]*"/g) || []).length;
+      }, 0) || 0;
+      
+      addLog(`Total de respostas DNS: ${answerCount}`);
     }
   }, [terraformCode]);
 

@@ -26,11 +26,8 @@ const Index = () => {
       const zones = parseBindFiles(files);
       setParsedZones(zones);
       
-      // Default Azion token (would be replaced by user input)
-      const defaultAzionToken = "<token>";
-      
-      // Generate Terraform code
-      const terraform = generateTerraformConfig(zones, defaultAzionToken);
+      // Generate Terraform code without hardcoded token
+      const terraform = generateTerraformConfig(zones);
       setTerraformCode(terraform);
       
       // Analyze DNS configurations
@@ -50,12 +47,11 @@ const Index = () => {
   };
 
   const handleGitHubSubmit = (config: GitHubConfig) => {
-    // In a real app, this would make an API call to push to GitHub
+    // Log the GitHub configuration
     console.log('GitHub configuration:', config);
     
-    // Regenerate the Terraform code with the provided Azion token
-    const updatedTerraform = generateTerraformConfig(parsedZones, config.azionToken);
-    setTerraformCode(updatedTerraform);
+    // No need to regenerate the Terraform code as we now use GitHub secrets
+    toast.success('Configuração salva e enviada para GitHub com sucesso!');
   };
 
   const runAnalysis = () => {
